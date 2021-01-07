@@ -22,6 +22,6 @@ public class outputFormatting {
             zeros = "00";}
         else if (number <= 99) {
             zeros = "0";}
-        System.out.printf(string + " ".repeat(15 - lengthString) + zeros + "%d", number);
+        System.out.printf(string + " ".repeat(15 - lengthString) + zeros + "%d" + "\n", number);
     }
 }
