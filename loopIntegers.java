@@ -1,7 +1,7 @@
 /*
 java 15
 
-this programme reads an integer from STDIN, multiplies it with integers from 1 to 10 and prints calculation and result
+this program reads an integer from STDIN, multiplies it with integers from 1 to 10 and prints calculation and result
 
 example:
 input       2

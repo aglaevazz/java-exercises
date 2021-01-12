@@ -1,24 +1,12 @@
 /*
 java 15
 
-this programme reads an integer from STDIN, multiplies it with integers from 1 to 10 and prints calculation and result
-
-example:
-input       2
-output      2 x 1 = 2
-            2 x 2 = 4
-            2 x 3 = 6
-            2 x 4 = 8
-            2 x 5 = 10
-            2 x 6 = 12
-            2 x 7 = 14
-            2 x 8 = 16
-            2 x 9 = 18
-            2 x 10 = 20
+this program takes three integers a, b and n and calculates the following list of numbers:
+a + 2ˆ0 * b, a + 2ˆ0 * b + 2^1 * b, ... ,a + 2ˆ0 * b + 2^1 * b + ... + 1ˆn-1 * b
+the result is printed as a line of space separated numbers
  */
 
 import java.util.Scanner;
-import java.util.Arrays;
 
 public class loopIntegers2 {
 
