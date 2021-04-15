@@ -2,28 +2,28 @@ import java.util.*;
 
 public class MaxFlowEdmondsKarpAlgorithm {
 
-    public int getMaxFlow(Graph graph) {
+    private final Graph Graph = new Graph();
+
+    public int getMaxFlow(Node[] graph) {
         int flow = 0;
-        // shortest path is empty list if there is no path
-        ArrayList<Node> shortestPath = graph.get_shortest_path_BFS(graph.graph[1], graph.graph[graph.n_cities]);
+        ArrayList<Node> shortestPath = Graph.getShortestPathBFS(graph[1], graph[graph.length - 1]);
         while (shortestPath.size() > 0) {
-            int currentMaxFlow = calculate_max_flow_on_path(shortestPath);
+            int currentMaxFlow = getMaxFlowOnPath(shortestPath);
             flow += currentMaxFlow;
-            graph.calculateResidualGraph(shortestPath, currentMaxFlow);
-            shortestPath = graph.get_shortest_path_BFS(graph.graph[1], graph.graph[graph.n_cities]);
+            Graph.calculateResidualGraph(shortestPath, currentMaxFlow);
+            shortestPath = Graph.getShortestPathBFS(graph[1], graph[graph.length - 1]);
         }
         return flow;
-        }
+    }
 
-    public int calculate_max_flow_on_path(ArrayList<Node> path) {
-        int maxCapacity = 10001;
+    public int getMaxFlowOnPath(ArrayList<Node> path) {
+        int maxCapacity = 10000;
         Node current = path.get(0);
         for (int i = 1; i < path.size(); i++) {
             Node next = path.get(i);
-            HashMap<Integer, Integer> currentNeighbors = current.getNeighborNodes();
-            // problem: there could be several roads going from a to b with different capacity, wich to pick?
+            HashMap<Integer, Integer> currentNeighbors = current.getNeighbors();
             int currentCapacity = currentNeighbors.get(next.getValue());
-            if (currentCapacity < maxCapacity) {
+            if (currentCapacity <= maxCapacity) {
                 maxCapacity = currentCapacity;
             }
             current = next;
@@ -32,10 +32,9 @@ public class MaxFlowEdmondsKarpAlgorithm {
     }
 
     public static void main(String[] args) {
-        MaxFlowEdmondsKarpAlgorithm getMaxFlow = new MaxFlowEdmondsKarpAlgorithm();
-        Graph graph = new Graph();
-        graph.saveGraph();
-        int maxFlow = getMaxFlow.getMaxFlow(graph);
+        MaxFlowEdmondsKarpAlgorithm MaxFlow = new MaxFlowEdmondsKarpAlgorithm();
+        Node[] graph = MaxFlow.Graph.saveGraph();
+        int maxFlow = MaxFlow.getMaxFlow(graph);
         System.out.println(maxFlow);
     }
 
@@ -46,71 +45,69 @@ public class MaxFlowEdmondsKarpAlgorithm {
 
 class Graph {
 
-    public Node[] graph;
-    public int n_cities;
+    private Node[] graph;
+    private int nNodes;
 
     public Node[] saveGraph() {
         Scanner scanner = new Scanner(System.in);
-        n_cities = scanner.nextInt();
-        int n_roads = scanner.nextInt();
-        graph = new Node[n_cities + 1];
-        for (int i = 1; i <= n_cities; i++) {
+        nNodes = scanner.nextInt();
+        int nEdges = scanner.nextInt();
+        graph = new Node[nNodes + 1];
+        for (int i = 1; i <= nNodes; i++) {
             graph[i] = new Node(i);
         }
-        for (int i = 0; i < n_roads; i++) {
-            int start_vertex = scanner.nextInt();
-            int end_vertex = scanner.nextInt();
+        for (int i = 0; i < nEdges; i++) {
+            int startVertexValue = scanner.nextInt();
+            int endVertexValue = scanner.nextInt();
             int capacity = scanner.nextInt();
-            Node startNode = graph[start_vertex];
-            HashMap<Integer, Integer> neighbors = startNode.getNeighborNodes();
-            if (neighbors.containsKey(end_vertex)) {
-                int currentCapacity = neighbors.get(end_vertex);
-                graph[start_vertex].addNeighborNode(end_vertex, capacity + currentCapacity);
+            Node startNode = graph[startVertexValue];
+            HashMap<Integer, Integer> neighbors = startNode.getNeighbors();
+            if (neighbors.containsKey(endVertexValue)) {
+                int previousCapacity = neighbors.get(endVertexValue);
+                capacity += previousCapacity;
             }
-            else {
-                graph[start_vertex].addNeighborNode(end_vertex, capacity);
-            }
+            graph[startVertexValue].addNeighbor(endVertexValue, capacity);
         }
         return graph;
     }
 
     public void printGraph() {
-        for (int i_city = 1; i_city <= n_cities; i_city++) {
-            Node currentNode = graph[i_city];
-            HashMap<Integer, Integer> roads_from_city = currentNode.getNeighborNodes();
-            System.out.print(i_city + ": ");
-            for (Map.Entry<Integer, Integer> entry : roads_from_city.entrySet()) {
+        for (int i = 1; i <= nNodes; i++) {
+            Node current = graph[i];
+            HashMap<Integer, Integer> outgoingEdges = current.getNeighbors();
+            System.out.print(current.getValue() + ": ");
+            for (Map.Entry<Integer, Integer> entry : outgoingEdges.entrySet()) {
                 System.out.print("(" + entry.getKey() + " " + entry.getValue() + ")" + " ");
             }
             System.out.println();
         }
     }
 
-    public ArrayList<Node> get_shortest_path_BFS(Node start_node, Node end_node) {
-        Node[] previousNodes = solveShortestPath(start_node, end_node);
-        return reconstructPath(start_node, end_node, previousNodes);
+    public ArrayList<Node> getShortestPathBFS(Node startNode, Node endNode) {
+        Node[] previousNodes = getPreviousNodes(startNode, endNode);
+        return reconstructPath(startNode, endNode, previousNodes);
     }
 
-    public Node[] solveShortestPath(Node start_node, Node end_node) {
-        Node[] previousNodes = new Node[n_cities + 1];
-        if (start_node == end_node) {
+    public Node[] getPreviousNodes(Node startNode, Node endNode) {
+        Node[] previousNodes = new Node[nNodes + 1];
+        if (startNode == endNode) {
             return previousNodes;
         }
         Queue<Node> queue = new LinkedList<>();
-        queue.add(start_node);
-        Boolean[] visited = new Boolean[n_cities + 1];
+        queue.add(startNode);
+        Boolean[] visited = new Boolean[nNodes + 1];
         Arrays.fill(visited, Boolean.FALSE);
-        visited[start_node.getValue()] = true;
+        visited[startNode.getValue()] = true;
         while (!queue.isEmpty()) {
-            Node current_node = queue.remove();
-            HashMap<Integer, Integer> neighborNodes = current_node.getNeighborNodes();
-            for (Map.Entry<Integer, Integer> entry : neighborNodes.entrySet()) {
+            Node current = queue.remove();
+            HashMap<Integer, Integer> neighbors = current.getNeighbors();
+            for (Map.Entry<Integer, Integer> entry : neighbors.entrySet()) {
                 Node next = graph[entry.getKey()];
                 if (!visited[next.getValue()]) {
                     queue.add(next);
                     visited[next.getValue()] = true;
-                    previousNodes[next.getValue()] = current_node;
-                    if (next == end_node) {
+                    previousNodes[next.getValue()] = current;
+                    if (next == endNode) {
                         return previousNodes;
                     }
                 }
@@ -133,42 +130,35 @@ class Graph {
         return path;
     }
 
-    public void calculateResidualGraph(ArrayList<Node> path, int flow) {
+    public Node[] calculateResidualGraph(ArrayList<Node> path, int flow) {
         Node current = graph[1];
         for (int i = 1; i < path.size(); i++) {
             Node next = path.get(i);
-            subtractCapacity(current, next, flow);
-            addCapacity(next, current, flow);
+            updateCapacity(current, next, flow, "subtract");
+            updateCapacity(next, current, flow, "add");
             current = next;
         }
+        return graph;
     }
 
-    public void addCapacity(Node start, Node end, int flow) {
-        HashMap<Integer, Integer> startNeighbors = start.getNeighborNodes();
+    public void updateCapacity(Node start, Node end, int flow, String operation) {
+        HashMap<Integer, Integer> startNeighbors = start.getNeighbors();
         int capacity = 0;
         if (startNeighbors.containsKey(end.getValue())) {
             capacity = startNeighbors.get(end.getValue());
         }
-        if (capacity - flow <= 0 && startNeighbors.containsKey(start.getValue())) {
-            startNeighbors.remove(end.getValue());
-        }
-        startNeighbors.put(end.getValue(), capacity + flow);
-        start.setNeighborNodes(startNeighbors);
-    }
-
-    public void subtractCapacity(Node start, Node end, int flow) {
-        HashMap<Integer, Integer> startNeighbors = start.getNeighborNodes();
-        int capacity = 0;
-        if (startNeighbors.containsKey(end.getValue())) {
-            capacity = startNeighbors.get(end.getValue());
-        }
-        if (capacity - flow <= 0 && startNeighbors.containsKey(end.getValue())) {
-            startNeighbors.remove(end.getValue());
+        if (operation.equals("add")) {
+            startNeighbors.put(end.getValue(), capacity + flow);
         }
         else {
-            startNeighbors.put(end.getValue(), capacity - flow);
+            if (capacity - flow <= 0 && startNeighbors.containsKey(end.getValue())) {
+                startNeighbors.remove(end.getValue());
+            }
+            else {
+                startNeighbors.put(end.getValue(), capacity - flow);
+            }
         }
-        start.setNeighborNodes(startNeighbors);
+        start.setNeighbors(startNeighbors);
     }
 
 }
@@ -178,7 +168,7 @@ class Graph {
 class Node {
 
     private final int value;
-    private HashMap<Integer, Integer> neighborNodes = new HashMap<>();
+    private HashMap<Integer, Integer> neighbors = new HashMap<>();
 
     public Node(int newValue) {
         value = newValue;
@@ -188,16 +178,16 @@ class Node {
         return value;
     }
 
-    public HashMap<Integer, Integer> getNeighborNodes() {
-        return neighborNodes;
+    public HashMap<Integer, Integer> getNeighbors() {
+        return neighbors;
     }
 
-    public void addNeighborNode(int neighborValue, int capacity) {
-        neighborNodes.put(neighborValue, capacity);
+    public void addNeighbor(int neighborValue, int capacity) {
+        neighbors.put(neighborValue, capacity);
     }
 
-    public void setNeighborNodes(HashMap<Integer, Integer> neighbors) {
-        neighborNodes = neighbors;
+    public void setNeighbors(HashMap<Integer, Integer> neighbors) {
+        this.neighbors = neighbors;
     }
 }
 
